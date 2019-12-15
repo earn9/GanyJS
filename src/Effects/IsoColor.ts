@@ -19,13 +19,49 @@ import {
 
 
 export
+enum ColorMapType {
+    DIVERGING,
+    LAB,
+    RGB,
+    STEP,
+    CIELAB,
+    HSV,
+}
+
+
+export
+class ColorMap {
+
+  constructor (colorsArray: Float32Array, type: ColorMapType) {
+    this.colorsArray = colorsArray;
+    this.type = type;
+
+    const width = 256;
+
+    let array: Float32Array;
+
+    // Fill array depending on colorsArray and type.
+    // Maybe the JSON file should be available in GanyJS?
+    // And only expose colormap names to Python? They should be part of a Bunch so that name completion is available
+    // Although the Python API should allow passing custom colormaps as array and type
+
+    this.texture = new THREE.DataTexture(array, width, 1, THREE.RGBFormat, THREE.UnsignedByteType);
+  }
+
+  readonly colorsArray: Float32Array;
+  readonly type: ColorMapType;
+  readonly texture: THREE.DataTexture;
+
+}
+
+
+export
 class IsoColor extends Effect {
 
-  constructor (parent: Block, input: Input, min: number, max: number) {
+  constructor (parent: Block, input: Input, min: number, max: number, colorMap: ColorMap) {
     super(parent, input);
 
-    const textureLoader = new THREE.TextureLoader();
-    this.textureNode = new Nodes.TextureNode(textureLoader.load('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGMAAAABCAMAAAD92eD2AAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAEsUExURUQCVUUGWUYKXUcNYEcRZEgVZ0gZa0gcbkgfcEgjdEgmdkgpeUcte0cvfUYzf0U2gUQ5g0M8hEI/hUFCh0BFiD9IiT5Lij1OijtRizpTizlWjDhajDZcjTVfjTRhjTJkjjFmjjBpji9sji5uji1xjixyjit1jip4jil6jih9jid/jiaCjiWEjiSGjiOJjiKLjSGOjSGRjCCSjB+Vix+Xix+aih6ciR+fiB+hhyCjhiGmhSOohCWrgietgSmvfy2yfTC0ezS2eTi5dzy7dUC9ckS/cErBbU/Da1TFaFnHZF7JYWTLXmrNW3DPV3bRU33ST4PUS4rVR5DXQ5fYP57ZOqTbNqvcMrLdLbneKMDfJcfgIM7hHdTiGtvjGOLkGOnlGu/lHPbmH/vnI////6dkNu4AAAABYktHRGNcvi2qAAAAB3RJTUUH4wISEh00Ha7gTwAAAIl6VFh0UmF3IHByb2ZpbGUgdHlwZSBleGlmAAAImVWO0Q3DMAhE/5kiI2DAB4xTRYnUDTp+cJzK7fuA0wkO6Pi8T9oGjYWseyABLiwt5VUieKLMTbiNXnXydG2lZNmkMgUynG0N2uN/6YrA6eaOjh27VLocKhpVa49GKo83coV43D/U2X//1j/QBUTJLDCZZckEAAAAbElEQVQI12NgYGRiZmFlY+fg5OLm4eXjFxAUEhYRFROXkJSSlpGVk1dQVFJWUVVT19DU0tbR1dM3MDQyNjE1M7ewtLK2sbWzd3B0cnZxdXP38PTy9vH18w8IDAoOCQ0Lj4iMio6JjYtPSEwCAHgmEvTi4/F5AAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE5LTAyLTE4VDE4OjI5OjUyKzAxOjAwUKWXygAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxOS0wMi0xOFQxODoyOTo1MiswMTowMCH4L3YAAAAWdEVYdGV4aWY6RXhpZkltYWdlTGVuZ3RoADl2GPUTAAAAF3RFWHRleGlmOkV4aWZJbWFnZVdpZHRoADg4OE4hyKYAAAASdEVYdGV4aWY6RXhpZk9mZnNldAA2Njd3Z2EAAAAddEVYdGV4aWY6U29mdHdhcmUAU2hvdHdlbGwgMC4yOC40Lr5VtAAAAABJRU5ErkJggg=='));
+    this.textureNode = new Nodes.TextureNode(colorMap.texture);
 
     const functionNode = new Nodes.FunctionNode(
       `vec3 isoColorFunc${this.id}(sampler2D textureMap, float min, float max, float data){
@@ -75,6 +111,11 @@ class IsoColor extends Effect {
 
   get inputDimension () : InputDimension {
     return 1;
+  }
+
+  set colorMap (colorMap: ColorMap) {
+    // @ts-ignore
+    this.textureNode.value = colorMap.texture;
   }
 
   private initialized: boolean = false;

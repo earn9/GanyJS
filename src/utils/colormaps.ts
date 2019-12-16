@@ -27,7 +27,7 @@ interface IColorMap {
 
 
 export
-const colormaps: IColorMap[] = [
+const colorMaps: IColorMap[] = [
   {
     colorSpace: ColorSpace.DIVERGING,
     defaultMap: true,
@@ -13235,3 +13235,14 @@ const colormaps: IColorMap[] = [
   }
 ]
 
+
+export
+function getColorMap (name: string) : IColorMap {
+  for (const colormap of colorMaps) {
+    if (colormap.name == name) {
+      return colormap;
+    }
+  }
+
+  throw 'ColorMap ' + name + ' not found.';
+}
